@@ -7,6 +7,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import Toast from './components/Toast';
 import { DataContextType, Idea, Status, Category, User } from './types';
 import { INITIAL_IDEAS, DISCORD_CONFIG } from './constants';
+import { ExternalLink } from 'lucide-react';
 
 export const DataContext = createContext<DataContextType | null>(null);
 
@@ -21,85 +22,37 @@ const App: React.FC = () => {
     setToast({ message, type });
   };
 
-  // Check for saved user on load and handle OAuth callback
+  // Check for saved user on load
   useEffect(() => {
-    // 1. Check Local Storage
     const savedUser = localStorage.getItem('forge_user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
-
-    // 2. Check for OAuth Fragment (Discord Redirect)
-    // The fragment looks like: #access_token=...&token_type=Bearer&expires_in=...
-    // Note: Since we use HashRouter, the browser might mix the router hash with the OAuth hash if not careful.
-    // Standard OAuth Implicit Grant returns parameters in the hash.
-    // If the URL is http://localhost/#access_token=..., HashRouter might try to route to /access_token=...
-    
-    // We explicitly check window.location.hash before React Router processes it fully, 
-    // or we check if the current hash contains access_token.
-    const hash = window.location.hash;
-    if (hash.includes('access_token')) {
-        const params = new URLSearchParams(hash.replace('#', '')); // basic parse
-        // If using HashRouter, the hash might look like "#/access_token=..." or just "#access_token=..." depending on redirect URI
-        // Let's try to extract access_token regardless of position
-        const accessTokenMatch = hash.match(/access_token=([^&]*)/);
-        
-        if (accessTokenMatch && accessTokenMatch[1]) {
-            const token = accessTokenMatch[1];
-            handleAuthSuccess(token);
-            
-            // Clear the hash so the user doesn't see the ugly token and Router works
-            window.location.hash = ''; 
-        }
-    }
-    
-    if (hash.includes('error')) {
-        showToast("Discord Authorization Failed", "error");
-        window.location.hash = '';
-    }
-
   }, []);
 
-  const handleAuthSuccess = async (token: string) => {
-    // In a real production app, you would use this token to fetch:
-    // https://discord.com/api/users/@me
+  const login = async () => {
+    // SIMULATION MODE
+    // Since we don't have real keys, we simulate the experience.
     
-    // For this demo, we simulate a successful fetch using the received token
-    // to prove the flow completed.
+    // 1. Simulate connecting to Discord
+    await new Promise(resolve => setTimeout(resolve, 600));
     
-    // Simulating API latency
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // 2. Simulate "Verifying Guild Membership"
+    // This gives the user feedback that we are checking if they are in the server
+    showToast("Verifying membership in 'The Forge Official'...", "info");
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
+    // 3. Success State
     const mockUser: User = {
         id: '847382',
         username: 'ForgedSoul', 
         discriminator: '9921',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'
     };
+    
     setUser(mockUser);
     localStorage.setItem('forge_user', JSON.stringify(mockUser));
-    showToast("Login Successful! Welcome back.");
-  };
-
-  const login = async () => {
-    // ACTUAL DISCORD OAUTH REDIRECT
-    // We use window.location.origin as the redirect_uri. 
-    // You must add this exact URL (e.g. http://localhost:3000) to your Discord Developer Portal > OAuth2 > Redirects.
-    
-    const redirectUri = window.location.origin; 
-    const scope = encodeURIComponent('identify guilds.join');
-    const clientId = DISCORD_CONFIG.CLIENT_ID;
-
-    if (clientId === '123456789012345678') {
-        showToast("Dev Warning: Please set a valid CLIENT_ID in constants.ts", "error");
-        // We proceed anyway to show the redirect happens, but Discord will show an error page.
-    }
-    
-    // Using Implicit Grant (response_type=token) so we don't need a backend to swap code for token
-    const url = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${scope}`;
-    
-    // Redirect
-    window.location.href = url;
+    showToast("Verified! Welcome to the Forge.", "success");
   };
 
   const logout = () => {
@@ -200,21 +153,37 @@ const App: React.FC = () => {
             </Routes>
           </main>
 
-          {/* Creator Footer */}
-          <footer className="w-full py-8 mt-12 border-t border-white/5 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
-            <div className="flex items-center gap-2 text-gray-400 text-sm">
-              <span>Forged with fire by</span>
+          {/* Footer - Made by Kami */}
+          <footer className="w-full py-10 mt-12 border-t border-white/5 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-6">
+            
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-xs text-gray-500 uppercase tracking-widest font-semibold">Forged By</span>
+              
               <a 
-                href="https://discord.com" 
+                href="https://discord.gg/theforgers" 
                 target="_blank" 
                 rel="noreferrer"
-                className="flex items-center gap-2 bg-[#5865F2]/10 hover:bg-[#5865F2]/20 px-3 py-1 rounded-full border border-[#5865F2]/30 text-[#5865F2] transition-colors group"
+                className="group flex items-center gap-4 bg-[#1E1E1E] hover:bg-[#252525] border border-white/10 hover:border-[#FFD700]/50 pl-2 pr-6 py-2 rounded-full transition-all duration-300 shadow-lg hover:shadow-[#FFD700]/10"
               >
-                <div className="w-5 h-5 rounded-full bg-[#5865F2] flex items-center justify-center text-white text-[10px] font-bold">K</div>
-                <span className="font-medium group-hover:underline">Kami</span>
+                <div className="relative">
+                  <img 
+                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=Kami&backgroundColor=b6e3f4" 
+                    alt="Kami" 
+                    className="w-10 h-10 rounded-full border-2 border-[#1E1E1E] group-hover:border-[#FFD700] transition-colors"
+                  />
+                  <div className="absolute -bottom-1 -right-1 bg-[#10B981] w-3 h-3 rounded-full border-2 border-[#1E1E1E]"></div>
+                </div>
+                
+                <div className="flex flex-col">
+                  <span className="text-white font-bold leading-none group-hover:text-[#FFD700] transition-colors">Kami</span>
+                  <span className="text-[10px] text-gray-500 group-hover:text-gray-400">System Architect</span>
+                </div>
+
+                <ExternalLink className="w-4 h-4 text-gray-600 group-hover:text-white transition-colors ml-2" />
               </a>
             </div>
-            <p className="text-[10px] text-gray-600 uppercase tracking-widest">The Voice of the Community</p>
+
+            <p className="text-[10px] text-gray-700">© 2024 Forge Board. All rights reserved.</p>
           </footer>
           
           {toast && (

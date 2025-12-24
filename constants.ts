@@ -14,14 +14,10 @@ export const COLORS = {
 };
 
 export const DISCORD_CONFIG = {
-  // The unique ID of "The Forge Official" Discord Server
+  // Config preserved for future real implementation
   GUILD_ID: '987654321098765432', 
-  
-  // The link provided to users if they are NOT in the server
-  INVITE_URL: 'https://discord.gg/forge-official',
-
-  // REPLACE THIS WITH YOUR ACTUAL DISCORD CLIENT ID
-  CLIENT_ID: '123456789012345678'
+  INVITE_URL: 'https://discord.gg/theforgers',
+  CLIENT_ID: 'MOCK_MODE_ENABLED' 
 };
 
 export const INITIAL_IDEAS: Idea[] = [
